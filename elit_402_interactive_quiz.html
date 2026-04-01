@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ELIT 402 Interactive Theory Quiz</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: linear-gradient(135deg, #0f172a, #111827 45%, #1e293b);
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .app {
+      width: 100%;
+      max-width: 900px;
+      background: rgba(15, 23, 42, 0.92);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      overflow: hidden;
+    }
+    .topbar {
+      padding: 18px 22px;
+      background: rgba(255,255,255,0.04);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .title {
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+    .meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      background: rgba(255,255,255,0.08);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.95rem;
+    }
+    .content {
+      padding: 26px;
+    }
+    .question-number {
+      font-size: 0.95rem;
+      color: #cbd5e1;
+      margin-bottom: 10px;
+    }
+    .question {
+      font-size: 1.45rem;
+      line-height: 1.45;
+      margin-bottom: 22px;
+      font-weight: 700;
+    }
+    .answers {
+      display: grid;
+      gap: 12px;
+    }
+    .answer-btn {
+      width: 100%;
+      text-align: left;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: white;
+      padding: 16px 18px;
+      border-radius: 16px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+    .answer-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.08);
+    }
+    .answer-btn:disabled {
+      cursor: default;
+      opacity: 1;
+    }
+    .answer-btn.correct {
+      background: rgba(34,197,94,0.22);
+      border-color: rgba(34,197,94,0.9);
+    }
+    .answer-btn.wrong {
+      background: rgba(239,68,68,0.22);
+      border-color: rgba(239,68,68,0.9);
+    }
+    .answer-btn.reveal-correct {
+      background: rgba(34,197,94,0.14);
+      border-color: rgba(34,197,94,0.6);
+    }
+    .explanation {
+      margin-top: 20px;
+      padding: 18px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      line-height: 1.6;
+      display: none;
+    }
+    .explanation.show { display: block; }
+    .status {
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .status.correct-text { color: #4ade80; }
+    .status.wrong-text { color: #f87171; }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 22px;
+      flex-wrap: wrap;
+    }
+    .nav-btn {
+      border: none;
+      background: #334155;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 14px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+    .nav-btn:hover:not(:disabled) { transform: translateY(-1px); }
+    .nav-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .nav-right {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .primary {
+      background: #2563eb;
+    }
+    .finish-card {
+      text-align: center;
+      padding: 16px 0 4px;
+    }
+    .finish-card h2 {
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+    .finish-card p {
+      color: #cbd5e1;
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+    .review-note {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.05);
+    }
+    @media (max-width: 640px) {
+      .content { padding: 18px; }
+      .question { font-size: 1.2rem; }
+      .answer-btn { font-size: 0.98rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="title">ELIT 402 Interactive Theory Quiz</div>
+      <div class="meta">
+        <div class="pill" id="progressPill">Question 1 / 15</div>
+        <div class="pill" id="scorePill">Score: 0</div>
+      </div>
+    </div>
+
+    <div class="content" id="content"></div>
+  </div>
+
+  <script>
+    const quizData = [
+      {
+        question: "Which option best shows the difference between Formalism and Structuralism?",
+        options: [
+          "Formalism studies literary devices inside the text, while Structuralism studies the wider systems that make meaning possible.",
+          "Formalism focuses on the reader, while Structuralism focuses on the author.",
+          "Formalism rejects language, while Structuralism studies only style.",
+          "Formalism is political, while Structuralism is purely emotional."
+        ],
+        correct: 0,
+        explanation: "Formalism is mainly intrinsic: it looks closely at diction, imagery, rhythm, plot, and other devices inside the text. Structuralism also cares about form, but it moves outward to systems such as language, genre, myth, and cultural codes."
+      },
+      {
+        question: "A critic says the word 'tree' does not naturally belong to the object itself; the connection exists only because speakers agree on it. Which concept is this?",
+        options: [
+          "Hyperreality",
+          "Arbitrariness of the sign",
+          "Defamiliarization",
+          "Metafiction"
+        ],
+        correct: 1,
+        explanation: "Saussure's idea of arbitrariness means there is no natural, necessary link between a signifier and what it refers to. The relation is conventional, not built into the object itself."
+      },
+      {
+        question: "If a poem makes ordinary rain seem completely new and shocking through unusual imagery, which Formalist concept is being used?",
+        options: [
+          "Binary opposition",
+          "Différance",
+          "Defamiliarization",
+          "Simulation"
+        ],
+        correct: 2,
+        explanation: "Defamiliarization, associated with Shklovsky, makes the familiar strange so that readers stop seeing automatically and begin noticing again."
+      },
+      {
+        question: "Which statement would Derrida be most likely to support?",
+        options: [
+          "Each important word in a text has one final meaning if we research enough.",
+          "Meaning is produced through unstable chains of difference and is never fully complete.",
+          "Author intention is the safest way to fix interpretation.",
+          "Language reflects reality directly and clearly."
+        ],
+        correct: 1,
+        explanation: "Derrida's idea of différance suggests meaning is both produced through difference and endlessly deferred. Because signs point to other signs, closure is never total."
+      },
+      {
+        question: "A student interprets a novel by comparing it with myths, genre conventions, and cultural codes rather than treating it as isolated. This is closest to:",
+        options: [
+          "Structuralism",
+          "Formalism",
+          "Romanticism",
+          "New Historicism only"
+        ],
+        correct: 0,
+        explanation: "Structuralism argues that meaning comes from systems and relations. A text becomes readable through structures larger than itself, including mythic patterns, codes, and conventions."
+      },
+      {
+        question: "Which idea marks Barthes's move away from author-centered criticism?",
+        options: [
+          "Langue over parole",
+          "The death of the author",
+          "The dominant",
+          "Scientific positivism"
+        ],
+        correct: 1,
+        explanation: "Barthes argues that meaning should not be fixed by the author's intention. Instead, the reader's encounter with the text becomes central."
+      },
+      {
+        question: "When a text exposes itself as a made object and reminds readers that it is fictional, this is called:",
+        options: [
+          "Metafiction",
+          "Foregrounding",
+          "Binary collapse",
+          "Parole"
+        ],
+        correct: 0,
+        explanation: "Metafiction is fiction about fiction. It draws attention to its own artificiality and refuses to let the reader forget that the story is constructed."
+      },
+      {
+        question: "Which of the following is the clearest postmodern concern?",
+        options: [
+          "The autonomous literary device",
+          "The stability of mythic structures",
+          "The blurring of reality and simulation",
+          "The purity of genre"
+        ],
+        correct: 2,
+        explanation: "Postmodernism, especially through Baudrillard, is deeply concerned with simulation, hyperreality, and the weakening of the distinction between the real and the represented."
+      },
+      {
+        question: "A critic notices that in a text, 'male/female' and 'reason/emotion' are treated as oppositions, then argues the supposedly weaker side is actually necessary for the stronger side. This move is most closely related to:",
+        options: [
+          "Formalist close reading",
+          "Deconstruction",
+          "Russian Futurism",
+          "Biographical criticism"
+        ],
+        correct: 1,
+        explanation: "Deconstruction often examines hierarchical binary oppositions and shows that the privileged term depends on the devalued one. This destabilizes the hierarchy."
+      },
+      {
+        question: "Which pair is matched correctly?",
+        options: [
+          "Saussure — hyperreality",
+          "Baudrillard — simulation",
+          "Shklovsky — death of the author",
+          "Derrida — literariness"
+        ],
+        correct: 1,
+        explanation: "Baudrillard is the theorist most strongly linked to simulation, simulacra, hyperreality, and the loss of the real."
+      },
+      {
+        question: "Why would a Formalist be less interested in the writer's childhood when analyzing a poem?",
+        options: [
+          "Because Formalism treats literature as an autonomous verbal artifact.",
+          "Because Formalism believes history is false.",
+          "Because Formalists study only political systems.",
+          "Because Formalists reject all meaning."
+        ],
+        correct: 0,
+        explanation: "Formalist criticism aims to study literature as literature. It focuses on what the text does through its language and structure rather than on external facts such as biography."
+      },
+      {
+        question: "Which statement best captures the relation between Structuralism and Post-structuralism?",
+        options: [
+          "Post-structuralism fully rejects language as important.",
+          "Post-structuralism keeps Structuralism's interest in language but questions stable systems and fixed meanings.",
+          "Post-structuralism returns to pure author intention.",
+          "They are exactly the same theory with different names."
+        ],
+        correct: 1,
+        explanation: "Post-structuralism grows out of Structuralism. It accepts that language matters deeply, but it challenges the idea that linguistic systems deliver stable, final meaning."
+      },
+      {
+        question: "A novel imitates older literary styles playfully but not mockingly. Which postmodern feature is this?",
+        options: [
+          "Pastiche",
+          "Parole",
+          "Dominant",
+          "Signified"
+        ],
+        correct: 0,
+        explanation: "Pastiche is an imitation or patchwork of prior styles. Unlike parody, it does not necessarily mock; it often reuses earlier forms in a playful or admiring way."
+      },
+      {
+        question: "What does 'langue' refer to in Saussurean thought?",
+        options: [
+          "An individual act of speech",
+          "The deep structure of a myth",
+          "The underlying system of language",
+          "A literary symbol"
+        ],
+        correct: 2,
+        explanation: "Langue is the shared system, rules, and structure of a language. Parole is the individual utterance made within that system."
+      },
+      {
+        question: "Which interpretation is most post-structuralist?",
+        options: [
+          "This poem means exactly what the author wanted, and that settles it.",
+          "This poem's images pull in different directions, so its own language unsettles any single message.",
+          "This poem should only be judged by rhyme and meter.",
+          "This poem can only be understood through its publication date."
+        ],
+        correct: 1,
+        explanation: "Post-structuralist reading pays attention to ambiguity, contradiction, slippage, and instability. It resists reducing the text to a single secure meaning."
+      }
+    ];
+
+    let currentIndex = 0;
+    let score = 0;
+    let userAnswers = new Array(quizData.length).fill(null);
+
+    function playCorrectSound() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const now = ctx.currentTime;
+      [523.25, 659.25, 783.99].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + i * 0.08);
+        gain.gain.setValueAtTime(0.0001, now + i * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.25, now + i * 0.08 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.08 + 0.24);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + i * 0.08);
+        osc.stop(now + i * 0.08 + 0.26);
+      });
+    }
+
+    function playWrongSound() {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const now = ctx.currentTime;
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc1.type = 'sawtooth';
+      osc2.type = 'square';
+      osc1.frequency.setValueAtTime(220, now);
+      osc2.frequency.setValueAtTime(155, now);
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.28, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+      osc1.start(now);
+      osc2.start(now);
+      osc1.stop(now + 0.46);
+      osc2.stop(now + 0.46);
+    }
+
+    function updateHeader() {
+      document.getElementById('progressPill').textContent = `Question ${Math.min(currentIndex + 1, quizData.length)} / ${quizData.length}`;
+      document.getElementById('scorePill').textContent = `Score: ${score}`;
+    }
+
+    function renderQuestion() {
+      updateHeader();
+      const q = quizData[currentIndex];
+      const selected = userAnswers[currentIndex];
+      const answered = selected !== null;
+
+      const content = document.getElementById('content');
+      content.innerHTML = `
+        <div class="question-number">Theory Practice • Mixed Advanced Quiz</div>
+        <div class="question">${q.question}</div>
+        <div class="answers">
+          ${q.options.map((opt, i) => {
+            let cls = 'answer-btn';
+            if (answered) {
+              if (i === q.correct) cls += ' correct';
+              if (selected === i && i !== q.correct) cls += ' wrong';
+              if (selected !== i && i === q.correct && selected !== q.correct) cls += ' reveal-correct';
+            }
+            return `<button class="${cls}" ${answered ? 'disabled' : ''} onclick="selectAnswer(${i})">${String.fromCharCode(65 + i)}. ${opt}</button>`;
+          }).join('')}
+        </div>
+        <div class="explanation ${answered ? 'show' : ''}">
+          ${answered ? `<div class="status ${selected === q.correct ? 'correct-text' : 'wrong-text'}">${selected === q.correct ? 'Correct.' : 'Incorrect.'}</div>` : ''}
+          ${answered ? `<div><strong>Explanation:</strong> ${q.explanation}</div>` : ''}
+        </div>
+        <div class="controls">
+          <button class="nav-btn" onclick="goPrev()" ${currentIndex === 0 ? 'disabled' : ''}>← Previous</button>
+          <div class="nav-right">
+            <button class="nav-btn primary" onclick="goNext()" ${answered ? '' : 'disabled'}>${currentIndex === quizData.length - 1 ? 'Finish' : 'Next →'}</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function selectAnswer(index) {
+      if (userAnswers[currentIndex] !== null) return;
+      userAnswers[currentIndex] = index;
+      if (index === quizData[currentIndex].correct) {
+        score++;
+        playCorrectSound();
+      } else {
+        playWrongSound();
+      }
+      renderQuestion();
+    }
+
+    function goPrev() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderQuestion();
+      }
+    }
+
+    function goNext() {
+      if (userAnswers[currentIndex] === null) return;
+      if (currentIndex < quizData.length - 1) {
+        currentIndex++;
+        renderQuestion();
+      } else {
+        renderFinish();
+      }
+    }
+
+    function renderFinish() {
+      updateHeader();
+      const total = quizData.length;
+      const percent = Math.round((score / total) * 100);
+      let message = 'Good work — review the explanations for the questions you missed.';
+      if (percent >= 85) message = 'Excellent result — your theory distinctions are strong.';
+      else if (percent >= 65) message = 'Solid job — you understand a lot, but a few concepts still need tightening.';
+
+      document.getElementById('content').innerHTML = `
+        <div class="finish-card">
+          <h2>Quiz Complete</h2>
+          <p>You scored <strong>${score}</strong> out of <strong>${total}</strong> (${percent}%).</p>
+          <div class="review-note">${message}</div>
+          <div class="controls" style="justify-content:center; margin-top:24px;">
+            <button class="nav-btn" onclick="restartQuiz()">Restart Quiz</button>
+            <button class="nav-btn primary" onclick="reviewFromStart()">Review Questions</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function restartQuiz() {
+      currentIndex = 0;
+      score = 0;
+      userAnswers = new Array(quizData.length).fill(null);
+      renderQuestion();
+    }
+
+    function reviewFromStart() {
+      currentIndex = 0;
+      renderQuestion();
+    }
+
+    renderQuestion();
+  </script>
+</body>
+</html>
